@@ -1,0 +1,16 @@
+{
+    "job": [
+        {
+            "command": "date",
+            "interval": "*/5 * * * *",
+            "max_iterations": 2,
+            "name": "Get date every 5 seconds"
+        },
+        {
+            "command": "",
+            "interval": "*/1 * * * *",
+            "max_iterations": 12,
+            "name": "1-second heartbeat"
+        }
+    ]
+}
