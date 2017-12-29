@@ -16,13 +16,14 @@ import (
 const version = "0.1.0"
 
 type CronEntry struct {
-    Command        string    `json:"command"`
-    Cron          *cron.Cron `json:"-"`
-    Id             int       `json:"-"`
-    Interval       string    `json:"interval"`
-    Iteration      int64     `json:"-"`
-    MaxIterations  int64     `json:"max_iterations"`
-    Name           string    `json:"name"`
+    CommandArgs   []string    `json:"command_args"`
+    CommandName     string    `json:"command_name"`
+    Cron           *cron.Cron `json:"-"`
+    JobName         string    `json:"job_name"`
+    Id              int       `json:"-"`
+    Interval        string    `json:"interval"`
+    Iteration       int64     `json:"-"`
+    MaxIterations   int64     `json:"max_iterations"`
 }
 
 type CronTable struct {
@@ -69,15 +70,15 @@ func main() {
             wg.Add(1)
             table.Job[i].Cron.AddFunc(table.Job[i].Interval, func() {
                 errand.Iteration = errand.Iteration + 1
-                logger.PrintlnInfo("Errand", errand.Id, "| Running '" + errand.Name + "'", "| iteration", errand.Iteration)
+                logger.PrintlnInfo("Errand", errand.Id, "| Running '" + errand.JobName + "'", "| iteration", errand.Iteration)
 
-                if buffer, err := exec.Command("bash", "-c", errand.Command).Output(); err == nil {
+                if buffer, err := exec.Command(errand.CommandName, errand.CommandArgs...).Output(); err == nil {
                     logger.PrintlnInfo("Errand", errand.Id, "Output:", string(buffer))
                 }
 
                 if errand.MaxIterations > 0 && errand.Iteration >= errand.MaxIterations {
                     errand.Cron.Stop()
-                    logger.PrintlnInfo("Errand", errand.Id, "| Stopping '" + errand.Name + "'")
+                    logger.PrintlnInfo("Errand", errand.Id, "| Stopping '" + errand.JobName + "'")
                     wg.Done()
                 }
             })
@@ -89,12 +90,12 @@ func main() {
     logger.PrintlnInfo("Stopping errand", version)
 }
 
-func loadCronTable(fileName string) CronTable {
+func loadCronTable(file string) CronTable {
     var err error = nil
     var f *os.File = nil
     var table CronTable
 
-    if f, err = os.Open(fileName); err == nil {
+    if f, err = os.Open(file); err == nil {
         defer f.Close()
         decoder := json.NewDecoder(f)
         err = decoder.Decode(&table)

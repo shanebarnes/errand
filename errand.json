@@ -1,16 +1,18 @@
 {
     "job": [
         {
-            "command": "date",
+            "job_name": "Get date every 5 seconds",
+            "command_name": "bash",
+            "command_args": [ "-c", "date" ],
             "interval": "*/5 * * * *",
-            "max_iterations": 2,
-            "name": "Get date every 5 seconds"
+            "max_iterations": 2
         },
         {
-            "command": "",
+            "job_name": "1-second heartbeat",
+            "command_name": "bash",
+            "command_args": [],
             "interval": "*/1 * * * *",
-            "max_iterations": 12,
-            "name": "1-second heartbeat"
+            "max_iterations": 12
         }
     ]
 }
