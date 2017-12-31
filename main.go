@@ -1,6 +1,7 @@
 package main
 
 import (
+    "context"
     "encoding/json"
     "log"
     "os"
@@ -8,22 +9,24 @@ import (
     "os/signal"
     "sync"
     "syscall"
+    "time"
 
     "github.com/robfig/cron"
     "github.com/shanebarnes/goto/logger"
 )
 
-const version = "0.1.0"
+const version = "0.1.1"
 
 type CronEntry struct {
-    CommandArgs   []string    `json:"command_args"`
-    CommandName     string    `json:"command_name"`
-    Cron           *cron.Cron `json:"-"`
-    JobName         string    `json:"job_name"`
-    Id              int       `json:"-"`
-    Interval        string    `json:"interval"`
-    Iteration       int64     `json:"-"`
-    MaxIterations   int64     `json:"max_iterations"`
+    CommandArgs       []string    `json:"command_args"`
+    CommandName         string    `json:"command_name"`
+    CommandTimeoutSec   int64     `json:"command_timeout_sec"`
+    Cron               *cron.Cron `json:"-"`
+    JobName             string    `json:"job_name"`
+    Id                  int       `json:"-"`
+    Interval            string    `json:"interval"`
+    Iteration           int64     `json:"-"`
+    MaxIterations       int64     `json:"max_iterations"`
 }
 
 type CronTable struct {
@@ -54,6 +57,7 @@ func main() {
     defer file.Close()
 
     logger.Init(log.Ldate | log.Ltime | log.Lmicroseconds, logger.Info, file)
+    logger.Init(log.Ldate | log.Ltime | log.Lmicroseconds, logger.Info, os.Stdout)
     logger.PrintlnInfo("Starting errand", version)
 
     table := loadCronTable("errand.json")
@@ -72,9 +76,15 @@ func main() {
                 errand.Iteration = errand.Iteration + 1
                 logger.PrintlnInfo("Errand", errand.Id, "| Running '" + errand.JobName + "'", "| iteration", errand.Iteration)
 
-                if buffer, err := exec.Command(errand.CommandName, errand.CommandArgs...).Output(); err == nil {
-                    logger.PrintlnInfo("Errand", errand.Id, "Output:", string(buffer))
+                ctx, cancel := context.WithTimeout(context.Background(), time.Duration(errand.CommandTimeoutSec) * time.Second)
+                defer cancel()
+
+                buffer, err := exec.CommandContext(ctx, errand.CommandName, errand.CommandArgs...).CombinedOutput()
+                if err != nil {
+                    logger.PrintlnError("Errand", errand.Id, "failed:", err)
                 }
+
+                logger.PrintlnInfo("Errand", errand.Id, "Output:", string(buffer))
 
                 if errand.MaxIterations > 0 && errand.Iteration >= errand.MaxIterations {
                     errand.Cron.Stop()

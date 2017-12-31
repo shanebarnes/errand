@@ -1,18 +1,12 @@
 {
     "job": [
         {
-            "job_name": "Get date every 5 seconds",
+            "job_name": "Sleep for 5 seconds every 10 seconds",
             "command_name": "bash",
-            "command_args": [ "-c", "date" ],
-            "interval": "*/5 * * * *",
-            "max_iterations": 2
-        },
-        {
-            "job_name": "1-second heartbeat",
-            "command_name": "bash",
-            "command_args": [],
-            "interval": "*/1 * * * *",
-            "max_iterations": 12
+            "command_args": [ "-c", "sleep 5" ],
+            "command_timeout_sec": 9,
+            "interval": "*/10 * * * *",
+            "max_iterations": -1
         }
     ]
 }
