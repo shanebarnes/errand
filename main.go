@@ -7,6 +7,7 @@ import (
     "os"
     "os/exec"
     "os/signal"
+    "strings"
     "sync"
     "syscall"
     "time"
@@ -15,18 +16,25 @@ import (
     "github.com/shanebarnes/goto/logger"
 )
 
-const version = "0.1.1"
+const version = "0.2.0"
+
+type Set struct {
+    Variable   string `json:"variable"`
+    Objects  []string `json:"objects"`
+}
 
 type CronEntry struct {
-    CommandArgs       []string    `json:"command_args"`
-    CommandName         string    `json:"command_name"`
-    CommandTimeoutSec   int64     `json:"command_timeout_sec"`
-    Cron               *cron.Cron `json:"-"`
-    JobName             string    `json:"job_name"`
-    Id                  int       `json:"-"`
-    Interval            string    `json:"interval"`
-    Iteration           int64     `json:"-"`
-    MaxIterations       int64     `json:"max_iterations"`
+    CommandArgs           []string    `json:"command_args"`
+    CommandName             string    `json:"command_name"`
+    CommandPermutation  [][]string    `json:"-"`
+    CommandSets           []Set       `json:"command_sets"`
+    CommandTimeoutSec       int64     `json:"command_timeout_sec"`
+    Cron                   *cron.Cron `json:"-"`
+    JobName                 string    `json:"job_name"`
+    Id                      int       `json:"-"`
+    Interval                string    `json:"interval"`
+    Iteration               int64     `json:"-"`
+    MaxIterations           int64     `json:"max_iterations"`
 }
 
 type CronTable struct {
@@ -37,6 +45,26 @@ func sigHandler(ch *chan os.Signal) {
     sig := <-*ch
     logger.PrintlnInfo("Captured sig " + sig.String())
     os.Exit(3)
+}
+
+func getCommandPermutation(sets [][]string) [][]string {
+    ret := [][]string{}
+
+    if len(sets) == 1 {
+        for _, s := range sets[0] {
+            ret = append(ret, []string{s})
+        }
+    } else if len(sets) > 1 {
+        perm := getCommandPermutation(sets[1:])
+        for _, s := range sets[0] {
+            for _, p := range perm {
+                tmp := append([]string{s}, p...)
+                ret = append(ret, tmp)
+            }
+        }
+    }
+
+    return ret
 }
 
 func main() {
@@ -69,22 +97,60 @@ func main() {
             logger.PrintlnInfo("Cron table entry", i, table.Job[i])
             table.Job[i].Cron = cron.New()
             table.Job[i].Id = i
+
+            for _, set := range table.Job[i].CommandSets {
+                table.Job[i].CommandPermutation = append(table.Job[i].CommandPermutation, set.Objects)
+            }
+
+            permutation := getCommandPermutation(table.Job[i].CommandPermutation)
+            logger.PrintlnInfo("Permutation:", permutation)
+
+            if len(permutation) == 0 {
+                table.Job[i].CommandPermutation = append(table.Job[i].CommandPermutation, table.Job[i].CommandArgs)
+            } else {
+                table.Job[i].CommandPermutation = table.Job[i].CommandPermutation[:0]
+                table.Job[i].CommandPermutation = make([][]string, len(permutation))
+
+                for x := range permutation {
+                    table.Job[i].CommandPermutation[x] = make([]string, len(table.Job[i].CommandArgs))
+                    copy(table.Job[i].CommandPermutation[x], table.Job[i].CommandArgs)
+
+                    // Search and replace
+                    for y := range table.Job[i].CommandPermutation[x]  {
+                        for z := range table.Job[i].CommandSets {
+                            table.Job[i].CommandPermutation[x][y] = strings.Replace(table.Job[i].CommandPermutation[x][y], table.Job[i].CommandSets[z].Variable, permutation[x][z], -1)
+                        }
+                    }
+                }
+            }
+
             errand := table.Job[i]
 
             wg.Add(1)
+
             table.Job[i].Cron.AddFunc(table.Job[i].Interval, func() {
                 errand.Iteration = errand.Iteration + 1
                 logger.PrintlnInfo("Errand", errand.Id, "| Running '" + errand.JobName + "'", "| iteration", errand.Iteration)
 
-                ctx, cancel := context.WithTimeout(context.Background(), time.Duration(errand.CommandTimeoutSec) * time.Second)
-                defer cancel()
+                var timeoutMsec int64 = errand.CommandTimeoutSec * 1000
 
-                buffer, err := exec.CommandContext(ctx, errand.CommandName, errand.CommandArgs...).CombinedOutput()
-                if err != nil {
-                    logger.PrintlnError("Errand", errand.Id, "failed:", err)
+                for i := range errand.CommandPermutation {
+                    logger.PrintlnInfo("Errand", errand.Id, "| Running", errand.CommandName, errand.CommandPermutation[i], "| permutation", i + 1, "| timeout", timeoutMsec, "ms")
+
+                    ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutMsec) * time.Millisecond)
+                    defer cancel()
+
+                    start := time.Now()
+                    buffer, err := exec.CommandContext(ctx, errand.CommandName, errand.CommandPermutation[i]...).CombinedOutput()
+                    elapsed := time.Since(start)
+                    timeoutMsec = timeoutMsec - int64(elapsed / time.Millisecond)
+
+                    if err != nil {
+                        logger.PrintlnError("Errand", errand.Id, "failed:", err)
+                    }
+
+                    logger.PrintlnInfo("Errand", errand.Id, "Output:", string(buffer))
                 }
-
-                logger.PrintlnInfo("Errand", errand.Id, "Output:", string(buffer))
 
                 if errand.MaxIterations > 0 && errand.Iteration >= errand.MaxIterations {
                     errand.Cron.Stop()

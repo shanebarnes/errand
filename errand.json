@@ -1,10 +1,20 @@
 {
     "job": [
         {
-            "job_name": "Sleep for 5 seconds every 10 seconds",
+            "job_name": "Sleep for a variable duration every 10 seconds",
             "command_name": "bash",
-            "command_args": [ "-c", "sleep 5" ],
-            "command_timeout_sec": 9,
+            "command_args": [ "-c", "sleep $duration_ipart.$duration_fpart" ],
+            "command_sets": [
+                {
+                    "variable": "$duration_ipart",
+                    "objects": [ "0", "1" ]
+                },
+                {
+                    "variable": "$duration_fpart",
+                    "objects": [ "7", "8", "9" ]
+                }
+            ],
+            "command_timeout_sec": 5,
             "interval": "*/10 * * * *",
             "max_iterations": -1
         }
