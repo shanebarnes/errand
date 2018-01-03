@@ -1,22 +1,49 @@
 {
     "job": [
         {
-            "job_name": "Sleep for a variable duration every 10 seconds",
+            "job_name": "AzCopy Transfer",
             "command_name": "bash",
-            "command_args": [ "-c", "sleep $duration_ipart.$duration_fpart" ],
+            "command_args": [ "/home/user/azcopy.sh",
+                              "$local_dir",
+                              "$action",
+                              "$threads",
+                              "$protocol",
+                              "$proxy",
+                              "$container",
+                              "$key" ],
             "command_sets": [
                 {
-                    "variable": "$duration_ipart",
-                    "objects": [ "0", "1" ]
+                    "variable": "$local_dir",
+                    "objects": [ "/home/user/data" ]
                 },
                 {
-                    "variable": "$duration_fpart",
-                    "objects": [ "7", "8", "9" ]
+                    "variable": "$action",
+                    "objects": [ "download" ]
+                },
+                {
+                    "variable": "$threads",
+                    "objects": [ "1" ]
+                },
+                {
+                    "variable": "$protocol",
+                    "objects": [ "http" ]
+                },
+                {
+                    "variable": "$proxy",
+                    "objects": [ "" ]
+                },
+                {
+                    "variable": "$container",
+                    "objects": [ "myblob.blob.core.windows.net/container" ]
+                },
+                {
+                    "variable": "$key",
+                    "objects": [ "" ]
                 }
             ],
-            "command_timeout_sec": 5,
-            "interval": "*/10 * * * *",
-            "max_iterations": -1
+            "command_timeout_sec": 45,
+            "interval": "*/60 * * * *",
+            "max_iterations": 1
         }
     ]
 }
