@@ -3,47 +3,32 @@
         {
             "job_name": "AzCopy Transfer",
             "command_name": "bash",
-            "command_args": [ "/home/user/azcopy.sh",
-                              "$local_dir",
-                              "$action",
-                              "$threads",
-                              "$protocol",
-                              "$proxy",
-                              "$container",
-                              "$key" ],
-            "command_sets": [
-                {
-                    "variable": "$local_dir",
-                    "objects": [ "/home/user/data" ]
-                },
-                {
-                    "variable": "$action",
-                    "objects": [ "download" ]
-                },
-                {
-                    "variable": "$threads",
-                    "objects": [ "1" ]
-                },
-                {
-                    "variable": "$protocol",
-                    "objects": [ "http" ]
-                },
-                {
-                    "variable": "$proxy",
-                    "objects": [ "" ]
-                },
-                {
-                    "variable": "$container",
-                    "objects": [ "myblob.blob.core.windows.net/container" ]
-                },
-                {
-                    "variable": "$key",
-                    "objects": [ "" ]
-                }
+            "command_args": [
+                "/home/user/errand/azcopy.sh",
+                "$output_file",
+                "$azcopy_jnl_dir",
+                "$local_dir",
+                "$action",
+                "$threads",
+                "$protocol",
+                "$proxy",
+                "$container",
+                "$key"
             ],
-            "command_timeout_sec": 45,
-            "interval": "*/60 * * * *",
-            "max_iterations": 1
+            "command_sets": [
+                { "variable": "$output_file"   , "objects": [ "/home/user/errand/azcopy.csv" ] },
+                { "variable": "$azcopy_jnl_dir", "objects": [ "/home/user/Microsoft/Azure/AzCopy" ] },
+                { "variable": "$local_dir",      "objects": [ "/home/user/errand/data" ] },
+                { "variable": "$action",         "objects": [ "download", "upload" ] },
+                { "variable": "$threads",        "objects": [ "32" ] },
+                { "variable": "$protocol",       "objects": [ "https" ] },
+                { "variable": "$proxy",          "objects": [ "", "localhost:8443" ] },
+                { "variable": "$container",      "objects": [ "mystorageaccount.blob.core.windows.net/mycontainer" ] },
+                { "variable": "$key",            "objects": [ "mykey" ] }
+            ],
+            "command_timeout_sec": 10500,
+            "interval": "0 0 */3 * * *",
+            "max_iterations": 56
         }
     ]
 }
