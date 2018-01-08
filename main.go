@@ -1,17 +1,20 @@
 package main
 
 import (
-	//"context"
 	"encoding/json"
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/kardianos/service"
 	"github.com/robfig/cron"
 	"github.com/shanebarnes/goto/logger"
 )
@@ -23,18 +26,22 @@ type Set struct {
 	Objects  []string `json:"objects"`
 }
 
+var sysLogger service.Logger
+
+type program struct{}
+
 type CronEntry struct {
-	CommandArgs          []string    `json:"command_args"`
-	CommandName            string    `json:"command_name"`
-	CommandPermutation [][]string    `json:"-"`
-	CommandSets          []Set       `json:"command_sets"`
-	CommandTimeoutSec      int64     `json:"command_timeout_sec"`
-	Cron                  *cron.Cron `json:"-"`
-	JobName                string    `json:"job_name"`
-	Id                     int       `json:"-"`
-	Interval               string    `json:"interval"`
-	Iteration              int64     `json:"-"`
-	MaxIterations          int64     `json:"max_iterations"`
+	CommandArgs        []string   `json:"command_args"`
+	CommandName        string     `json:"command_name"`
+	CommandPermutation [][]string `json:"-"`
+	CommandSets        []Set      `json:"command_sets"`
+	CommandTimeoutSec  int64      `json:"command_timeout_sec"`
+	Cron               *cron.Cron `json:"-"`
+	JobName            string     `json:"job_name"`
+	Id                 int        `json:"-"`
+	Interval           string     `json:"interval"`
+	Iteration          int64      `json:"-"`
+	MaxIterations      int64      `json:"max_iterations"`
 }
 
 type CronTable struct {
@@ -67,28 +74,15 @@ func getCommandPermutation(sets [][]string) [][]string {
 	return ret
 }
 
-func main() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGQUIT,
-		syscall.SIGABRT,
-		syscall.SIGKILL,
-		syscall.SIGSEGV,
-		syscall.SIGTERM,
-		syscall.SIGSTOP)
-
-	go sigHandler(&sigs)
-
-	file, _ := os.OpenFile("errand.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+func runErrand() {
+	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	file, _ := os.OpenFile(dir+"/errand.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	defer file.Close()
 
 	logger.Init(log.Ldate|log.Ltime|log.Lmicroseconds, logger.Info, file)
-	logger.Init(log.Ldate|log.Ltime|log.Lmicroseconds, logger.Info, os.Stdout)
 	logger.PrintlnInfo("Starting errand", version)
 
-	table := loadCronTable("errand.json")
+	table := loadCronTable(dir + "/errand.json")
 
 	var wg sync.WaitGroup
 
@@ -189,4 +183,80 @@ func loadCronTable(file string) CronTable {
 	}
 
 	return table
+}
+
+func (p *program) Start(s service.Service) error {
+	// Start should not block. Do the actual work in a go-routine.
+	go p.run()
+	return nil
+}
+func (p *program) run() {
+	runErrand()
+}
+func (p *program) Stop(s service.Service) error {
+	// Stop should not block. Return within a few seconds.
+	return nil
+}
+
+func main() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGQUIT,
+		syscall.SIGABRT,
+		syscall.SIGKILL,
+		syscall.SIGSEGV,
+		syscall.SIGTERM,
+		syscall.SIGSTOP)
+
+	go sigHandler(&sigs)
+
+	conf := &service.Config{
+		Name:        "errand",
+		DisplayName: "errand service",
+		Description: "errand service",
+	}
+
+	action := flag.String("action", "run", "[install | uninstall | run | start | stop]")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "version %s\n", version)
+		fmt.Fprintln(os.Stderr, "usage:")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	p := &program{}
+	s, err := service.New(p, conf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sysLogger, err = s.Logger(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// systemctl daemon-reexec
+
+	switch *action {
+	case "install":
+		err = s.Install()
+	case "uninstall":
+		err = s.Uninstall()
+	case "restart":
+		err = s.Restart()
+	case "run":
+		err = s.Run()
+	case "start":
+		err = s.Start()
+	case "stop":
+		err = s.Stop()
+	default:
+		log.Fatal("Invalid action:" + *action)
+	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }

@@ -66,7 +66,7 @@ if [ -f "${os_version_file}" ]; then
 fi
 
 if [ ! -s ${csv_file} ]; then
-    printf "#start_epoch_msec,os_version,azcopy_version,flight_version,max_thread_count,app_protocol,proxy_setting,blob_url,transfer_direction,transfer_err_code,transfer_size_bytes,transfer_duration_msec,goodput_bps\n" >> ${csv_file}
+    printf "#epoch_timestamp_msec,os_version,azcopy_version,flight_version,max_thread_count,app_protocol,proxy_setting,blob_url,transfer_direction,transfer_errno,transfer_size_bytes,transfer_duration_msec,goodput_bps\n" >> ${csv_file}
 fi
 
 printf "%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d\n" ${before} "${os_version}" "${azcopy_version}" "${flightgw_version}" "${threads}" "${protocol}" "${proxy}" "${container}" "${action}" "${err_code}" "${filesize}" "${duration}" "${bitrate}" >> ${csv_file}
