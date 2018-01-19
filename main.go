@@ -135,7 +135,7 @@ func runErrand() {
 						cmd := exec.Command(errand.CommandName, errand.CommandPermutation[i]...)
 						cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 						time.AfterFunc(time.Duration(timeoutMsec)*time.Millisecond, func() {
-							syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+							syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
 						})
 
 						start := time.Now()
