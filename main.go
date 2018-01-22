@@ -167,6 +167,48 @@ func runErrand() {
 	logger.PrintlnInfo("Stopping errand", version)
 }
 
+func runService(action string) {
+	conf := &service.Config{
+		Name:        "errand",
+		DisplayName: "errand service",
+		Description: "errand service",
+	}
+
+	p := &program{}
+	s, err := service.New(p, conf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sysLogger, err = s.Logger(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// systemctl daemon-reexec
+
+	switch action {
+	case "install":
+		err = s.Install()
+	case "uninstall":
+		err = s.Uninstall()
+	case "restart":
+		err = s.Restart()
+	case "run":
+		err = s.Run()
+	case "start":
+		err = s.Start()
+	case "stop":
+		err = s.Stop()
+	default:
+		log.Fatal("Invalid action:" + action)
+	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func loadCronTable(file string) CronTable {
 	var err error = nil
 	var f *os.File = nil
@@ -212,12 +254,6 @@ func main() {
 
 	go sigHandler(&sigs)
 
-	conf := &service.Config{
-		Name:        "errand",
-		DisplayName: "errand service",
-		Description: "errand service",
-	}
-
 	action := flag.String("action", "run", "[install | uninstall | run | start | stop]")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "version %s\n", version)
@@ -226,37 +262,5 @@ func main() {
 	}
 	flag.Parse()
 
-	p := &program{}
-	s, err := service.New(p, conf)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sysLogger, err = s.Logger(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// systemctl daemon-reexec
-
-	switch *action {
-	case "install":
-		err = s.Install()
-	case "uninstall":
-		err = s.Uninstall()
-	case "restart":
-		err = s.Restart()
-	case "run":
-		err = s.Run()
-	case "start":
-		err = s.Start()
-	case "stop":
-		err = s.Stop()
-	default:
-		log.Fatal("Invalid action:" + *action)
-	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	runService(*action)
 }

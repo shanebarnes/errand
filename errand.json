@@ -1,34 +1,15 @@
 {
     "job": [
         {
-            "job_name": "AzCopy Transfer",
+            "job_name": "Run Sleep Permutation Every 30 Seconds",
             "command_name": "bash",
-            "command_args": [
-                "/home/user/errand/azcopy.sh",
-                "$output_file",
-                "$azcopy_jnl_dir",
-                "$local_dir",
-                "$action",
-                "$threads",
-                "$protocol",
-                "$proxy",
-                "$container",
-                "$key"
-            ],
+            "command_args": [ "-c", "sleep $delay" ],
             "command_sets": [
-                { "variable": "$output_file"   , "objects": [ "/home/user/errand/azcopy.csv" ] },
-                { "variable": "$azcopy_jnl_dir", "objects": [ "/home/user/Microsoft/Azure/AzCopy" ] },
-                { "variable": "$local_dir",      "objects": [ "/home/user/errand/data" ] },
-                { "variable": "$action",         "objects": [ "download", "upload" ] },
-                { "variable": "$threads",        "objects": [ "32" ] },
-                { "variable": "$protocol",       "objects": [ "https" ] },
-                { "variable": "$proxy",          "objects": [ "", "localhost:8443" ] },
-                { "variable": "$container",      "objects": [ "mystorageaccount.blob.core.windows.net/mycontainer" ] },
-                { "variable": "$key",            "objects": [ "mykey" ] }
+                { "variable": "$delay", "objects": [ "1", "2", "3", "4" ] }
             ],
-            "command_timeout_sec": 10500,
-            "interval": "0 0 */3 * * *",
-            "max_iterations": 56
+            "command_timeout_sec": 25,
+            "interval": "*/30 * * * * *",
+            "max_iterations": 2
         }
     ]
 }
