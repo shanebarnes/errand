@@ -15,6 +15,8 @@ $ go build -v
 ## Run Instructions
 
 ``` shell
-$ sudo ./errand -action install
-$ sudo ./errand -action start
+$ sudo ./errand -service install
+$ sudo ./errand -service start
+$ sudo ./errand -service stop
+$ sudo ./errand -service uninstall
 ```

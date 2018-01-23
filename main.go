@@ -254,7 +254,7 @@ func main() {
 
 	go sigHandler(&sigs)
 
-	action := flag.String("action", "run", "[install | uninstall | run | start | stop]")
+	action := flag.String("service", "run", "[install | uninstall | run | start | stop]")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "version %s\n", version)
 		fmt.Fprintln(os.Stderr, "usage:")
