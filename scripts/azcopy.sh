@@ -30,17 +30,20 @@ function get_results() {
     bitrate=$((bits*1000/duration))
 
     if [ ! -s ${csv_file} ]; then
-        printf "#epoch_timestamp_msec,os_version,azcopy_version,flight_version,max_thread_count,block_size,packet_loss,app_protocol,proxy_setting,blob_url,transfer_direction,transfer_errno,transfer_size_bytes,transfer_duration_msec,goodput_bps\n" >> ${csv_file}
+        printf "#epoch_timestamp_msec,vm_location,vm_type,os_version,azcopy_version,flight_version,flight_pid,max_thread_count,block_size,packet_loss,app_protocol,proxy_setting,blob_url,transfer_direction,transfer_errno,transfer_size_bytes,transfer_duration_msec,goodput_bps\n" >> ${csv_file}
     fi
 
-    printf "%d,%s,%s,%s,%s,%d,%f,%s,%s,%s,%s,%d,%d,%d,%d\n" ${before} "${os_version}" "${azcopy_version}" "${flightgw_version}" "${threads}" "${block_size}" "${packet_loss}" "${protocol}" "${proxy}" "${container}" "${action}" "${err_code}" "${filesize}" "${duration}" "${bitrate}" >> ${csv_file}
+    printf "%d,%s,%s,%s,%s,%s,%d,%s,%d,%f,%s,%s,%s,%s,%d,%d,%d,%d\n" ${before} "${vm_location}" "${vm_size}" "${os_version}" "${azcopy_version}" "${flightgw_version}" "${flightgw_pid}" "${threads}" "${block_size}" "${packet_loss}" "${protocol}" "${proxy}" "${container}" "${action}" "${err_code}" "${filesize}" "${duration}" "${bitrate}" >> ${csv_file}
 }
 
 function get_versions() {
     azcopy_version=unknown
+    flightgw_pid=0
     flightgw_version=unknown
     os_version=unknown
     os_version_file="/etc/os-release"
+    vm_location=unknown
+    vm_size=unknown
 
     if command -v "${azcopy_bin}"; then
         azcopy_version=$(eval "${azcopy_bin} --version")
@@ -57,6 +60,24 @@ function get_versions() {
         else
             os_version="${PRETTY_NAME}"
         fi
+    fi
+
+    # jq could be used instead but is not installed by default
+    local vm_metadata=$(curl -s -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2017-04-02")
+
+    if [ $? -eq 0 ]; then
+        vm_location=$(echo ${vm_metadata} | grep -Po '"location":.*?[^\\]"' | awk -F':' '{print $2}')
+        vm_size=$(echo ${vm_metadata} | grep -Po '"vmSize":.*?[^\\]"' | awk -F':' '{print $2}')
+
+        # Trim leading/trailing double quotes
+        vm_location="${vm_location%\"}" && vm_location="${vm_location#\"}"
+        vm_size="${vm_size%\"}" && vm_size="${vm_size#\"}"
+    fi
+
+    local pid=$(pgrep flight-gateway)
+
+    if [ $? -eq 0 ]; then
+        flightgw_pid=${pid}
     fi
 }
 
