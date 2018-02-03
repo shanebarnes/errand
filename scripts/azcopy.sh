@@ -100,9 +100,9 @@ function run_azcopy() {
     local cmd=
 
     if [ "${action}" == "download" ]; then
-        cmd="${azcopy_bin} --quiet --recursive --destination ${local_dir} --source "${protocol}://${container}" --source-key ${access_key} --parallel-level ${threads}"
+        cmd="${azcopy_bin} --quiet --recursive --resume ${azcopy_jnl_dir} --destination ${local_dir} --source "${protocol}://${container}" --source-key ${access_key} --parallel-level ${threads}"
     elif [ "${action}" == "upload" ]; then
-        cmd="${azcopy_bin} --quiet --recursive --source ${local_dir} --destination "${protocol}://${container}" --dest-key ${access_key} --parallel-level ${threads}"
+        cmd="${azcopy_bin} --quiet --recursive --resume ${azcopy_jnl_dir} --source ${local_dir} --destination "${protocol}://${container}" --dest-key ${access_key} --parallel-level ${threads}"
     fi
 
     if [ "${block_size}" -ne 4 ]; then
