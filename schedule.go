@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/robfig/cron"
@@ -116,14 +114,8 @@ func runErrands() {
 					for i := range errand.CommandPermutation {
 						logger.PrintlnInfo("Errand", errand.Id, "| Running", errand.CommandName, errand.CommandPermutation[i], "| permutation", i+1, "| timeout", timeoutMsec, "ms")
 
-						cmd := exec.Command(errand.CommandName, errand.CommandPermutation[i]...)
-						cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-						time.AfterFunc(time.Duration(timeoutMsec)*time.Millisecond, func() {
-							syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
-						})
-
 						start := time.Now()
-						buffer, err := cmd.CombinedOutput()
+						buffer, err := RunErrand(errand, i, time.Duration(timeoutMsec) * time.Millisecond)
 						elapsed := time.Since(start)
 						timeoutMsec = timeoutMsec - int64(elapsed/time.Millisecond)
 

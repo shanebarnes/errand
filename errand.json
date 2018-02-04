@@ -1,14 +1,14 @@
 {
     "job": [
         {
-            "job_name": "Run Sleep Permutation Every 30 Seconds",
+            "job_name": "Run Sleep Permutation Every 10 Seconds",
             "command_name": "bash",
             "command_args": [ "-c", "sleep $delay" ],
             "command_sets": [
-                { "variable": "$delay", "objects": [ "1", "2", "3", "4" ] }
+                { "variable": "$delay", "objects": [ "1", "2", "3" ] }
             ],
-            "command_timeout_sec": 25,
-            "interval": "*/30 * * * * *",
+            "command_timeout_sec": 5,
+            "interval": "*/10 * * * * *",
             "max_iterations": 2
         }
     ]

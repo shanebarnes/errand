@@ -27,8 +27,7 @@ func main() {
 		syscall.SIGABRT,
 		syscall.SIGKILL,
 		syscall.SIGSEGV,
-		syscall.SIGTERM,
-		syscall.SIGSTOP)
+		syscall.SIGTERM)
 
 	go sigHandler(&sigs)
 
