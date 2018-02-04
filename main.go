@@ -10,7 +10,7 @@ import (
 	"github.com/shanebarnes/goto/logger"
 )
 
-const version = "0.2.0"
+const version = "0.2.1"
 
 func sigHandler(ch *chan os.Signal) {
 	sig := <-*ch

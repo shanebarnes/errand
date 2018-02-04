@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -30,6 +31,7 @@ type CronEntry struct {
 	Interval           string     `json:"interval"`
 	Iteration          int64      `json:"-"`
 	MaxIterations      int64      `json:"max_iterations"`
+	Os                 string     `json:"os"`
 }
 
 type CronTable struct {
@@ -154,7 +156,21 @@ func loadCronTable(file string) CronTable {
 		err = decoder.Decode(&table)
 	}
 
-	if err != nil {
+	if err == nil {
+		i := 0
+		for _, job := range table.Job {
+			os := strings.Split(job.Os, ",")
+
+			for j := range os {
+				if runtime.GOOS == os[j] {
+					table.Job[i] = job
+					i = i + 1
+					break
+				}
+			}
+		}
+		table.Job = table.Job[:i]
+	} else {
 		logger.PrintlnError(err)
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/kardianos/service"
@@ -45,7 +46,9 @@ func runService(action string) {
 		log.Fatal("Invalid action:" + action)
 	}
 
-	if err != nil {
+	if err == nil {
+		fmt.Println("Service '" + action + "' succeeded")
+        } else {
 		log.Fatal(err)
 	}
 }
