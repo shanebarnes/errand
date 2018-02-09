@@ -18,20 +18,20 @@
                 "$key"
             ],
             "command_sets": [
-                { "variable": "$output_file"   , "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\azcopy.csv" ] },
-                { "variable": "$azcopy_jnl_dir", "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\jnl\\out" ] },
-                { "variable": "$local_dir",      "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\out\\data" ] },
+                { "variable": "$output_file"   , "objects": [ "C:\\AzCopyWorkspace\\azcopy.csv" ] },
+                { "variable": "$azcopy_jnl_dir", "objects": [ "C:\\AzCopyWorkspace\\jnl\\out"] },
+                { "variable": "$local_dir",      "objects": [ "C:\\AzCopyWorkspace\\out\\data"] },
                 { "variable": "$action",         "objects": [ "upload"] },
-                { "variable": "$threads",        "objects": [ "64" ] },
-                { "variable": "$protocol",       "objects": [ "http" ] },
-                { "variable": "$proxy",          "objects": [ "\"\"" ] },
+                { "variable": "$threads",        "objects": [ "64"] },
+                { "variable": "$protocol",       "objects": [ "https"] },
+                { "variable": "$proxy",          "objects": [ "\"\"", "localhost:8443" ] },
                 { "variable": "$container",      "objects": [ "dlalancettewestus.blob.core.windows.net/davidcontainer/data" ] },
                 { "variable": "$pattern",        "objects": [ "*.*" ] },
                 { "variable": "$key",            "objects": [ "<KEY>" ] }
             ],
             "command_timeout_sec": 3600,
-            "interval": "0/20 * * * * *",
-            "max_iterations": 10
+            "interval": "0 0,4,8,12,16,20,24,28,32,36,40,44,48,52,56 * * * *",
+            "max_iterations": 4
         },
         {
             "job_name": "AzCopy download",
@@ -51,20 +51,20 @@
                 "$key"
             ],
             "command_sets": [
-                { "variable": "$output_file"   , "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\azcopy.csv" ] },
-                { "variable": "$azcopy_jnl_dir", "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\jnl\\in" ] },
-                { "variable": "$local_dir",      "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\in" ] },
+                { "variable": "$output_file"   , "objects": [ "C:\\AzCopyWorkspace\\azcopy.csv" ] },
+                { "variable": "$azcopy_jnl_dir", "objects": [ "C:\\AzCopyWorkspace\\jnl\\in" ] },
+                { "variable": "$local_dir",      "objects": [ "C:\\AzCopyWorkspace\\in\\data" ] },
                 { "variable": "$action",         "objects": [ "download" ] },
                 { "variable": "$threads",        "objects": [ "64" ] },
-                { "variable": "$protocol",       "objects": [ "http" ] },
-                { "variable": "$proxy",          "objects": [ "\"\"" ] },
+                { "variable": "$protocol",       "objects": [ "https" ] },
+                { "variable": "$proxy",          "objects": [ "\"\"", "localhost:8443" ] },
                 { "variable": "$container",      "objects": [ "dlalancettewestus.blob.core.windows.net/davidcontainer" ] },
                 { "variable": "$pattern",        "objects": [ "data" ] },
-                { "variable": "$key",            "objects": [ <KEY>" ] }
+                { "variable": "$key",            "objects": [ "<KEY>" ] }
             ],
             "command_timeout_sec": 3600,
-            "interval": "10/20 * * * * *",
-            "max_iterations": 10
+            "interval": "0 2,6,10,14,18,22,26,30,34,38,42,46,50,54,58 * * * *",
+            "max_iterations": 4
         }
     ]
 }

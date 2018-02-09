@@ -27,13 +27,13 @@ $azcopy_bin_dir     = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\"
 $azcopy_bin         = "$azcopy_bin_dir" + "AzCopy.exe"
 $azcopy_config_path = "$azcopy_bin_dir" + "AzCopy.exe.config"
 
-$flightgw_bin       = "/usr/local/bin/flight-gateway"
+$flightgw_bin        = "C:\Users\az-user\AppData\Local\Signiant\Flight Gateway\flight-gateway.exe"
 
 $azcopy_config_template = @'
 <configuration>
 <system.net>
   <defaultProxy>
-     <proxy proxyaddress="<PROTOCOL>://<PROXY_ADDRESS_AND_PORT>" bypassonlocal="true" />
+     <proxy proxyaddress="<PROTOCOL>://<PROXY_ADDRESS_AND_PORT>" bypassonlocal="false" />
   </defaultProxy>
 </system.net>
 </configuration>
@@ -77,6 +77,7 @@ function generate_config_file()
 function get_results()
 {
     $after = epoch_millis
+    Write-Host "Logging results at $after"
 
     $err_code = switch ($?)
     {
@@ -123,10 +124,10 @@ function get_versions()
 
     $Script:os_version = (Get-WmiObject -class Win32_OperatingSystem).Caption
 
+    $vm_metadata = $null
     try 
     {
-#        $vm_metadata = Invoke-WebRequest -Uri "http://169.254.169.254/metadata/instance?api-version=2017-04-02" -Headers @{'Metadata' = 'True'}
-        $vm_metadata = "" # TEMP; REPLACE WITH ^^^
+        $vm_metadata = (Invoke-WebRequest -Uri "http://169.254.169.254/metadata/instance?api-version=2017-04-02" -Headers @{'Metadata' = 'True'}).ToString()
     }
     catch 
     {
@@ -136,14 +137,13 @@ function get_versions()
     if ($vm_metadata -ne "") 
     {
         Write-Verbose "Succesfully retrieved VM Metadata -- parsing."
-        $vm_location = (Select-String ${vm_metadata} -Pattern '"location:.*?"').Split(":")[1]
-        $vm_location = (Select-String ${vm_metadata} -Pattern '"vmSize:.*?"').Split(":")[1]
+        $vm_metadata_json = ConvertFrom-Json $vm_metadata
 
-        $vm_location = "$vm_location".Trim('\"')
-        $vm_size = "$vm_size".Trim('\"')
+        $Script:vm_location = $vm_metadata_json.compute.location
+        $Script:vm_size = $vm_metadata_json.compute.vmSize
     }
 
-    $flightgw_pid = (Get-Process -Name "flight-gateway" -ea SilentlyContinue).Id
+    $Script:flightgw_pid = (Get-Process -Name "flight-gateway" -ea SilentlyContinue).Id
 }
 
 function on_signal() 
@@ -155,8 +155,8 @@ function on_signal()
 
 function run_azcopy()
 {
-    Write-Verbose "Began running"
     $Script:before = epoch_millis
+    Write-Host "Began running at $Script:before"
 
     if ("$action" -eq "download")
     {
