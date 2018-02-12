@@ -57,9 +57,7 @@ function generate_config_file()
 
     if ("$proxy" -ne "")
     {
-#        $azcopy_config = $azcopy_config_template.Replace("<PROTOCOL>", "$protocol")
-	$azcopy_config = $azcopy_config_template
-        $azcopy_config = $azcopy_config.Replace("<PROXY_ADDRESS_AND_PORT>", "$proxy")
+        $azcopy_config = $azcopy_config_template.Replace("<PROXY_ADDRESS_AND_PORT>", "$proxy")
         Write-Verbose "Proxy Configuration:"
         Write-Verbose "$azcopy_config"
     
@@ -91,8 +89,8 @@ function get_results()
         "#epoch_timestamp_msec,vm_location,vm_type,os_version,azcopy_version,flight_version,flight_pid,max_thread_count,block_size,packet_loss,app_protocol,proxy_setting,blob_url,transfer_direction,transfer_errno,transfer_size_bytes,transfer_duration_msec,goodput_bps" >> $csv_file
     }
     
-    $block_size = $null # For compatibility with shell verion; Windows AzCopy doesn't seem to support block size.
-    $packet_loss = 0 # For compatibility with shell verion; We can't manipulate packet loss.
+    $block_size = "" # For compatibility with shell verion; Windows AzCopy doesn't seem to support block size.
+    $packet_loss = "" # For compatibility with shell verion; We can't manipulate packet loss.
     
     ("${before},${vm_location},${vm_size},${os_version},${azcopy_version},${flightgw_version},${flightgw_pid},${threads},${block_size},${packet_loss},${protocol},${proxy},${container},${action},${success_code},${filesize},${duration},${bitrate}") >> ${csv_file}
 }
@@ -100,7 +98,7 @@ function get_results()
 function get_versions()
 {
     $Script:azcopy_version   = "unknown"
-    $Script:flightgw_pid     = 0
+    $Script:flightgw_pid     = "unknown"
     $Script:flightgw_version = "unknown"
     $Script:vm_location      = "unknown"
     $Script:vm_size          = "unknown"

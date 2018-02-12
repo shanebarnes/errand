@@ -1,7 +1,7 @@
 {
     "job": [
         {
-            "job_name": "AzCopy upload",
+            "job_name": "AzCopy upload every hour",
             "os": "windows",
             "command_name": "powershell",
             "command_args": [
@@ -18,23 +18,23 @@
                 "$key"
             ],
             "command_sets": [
-                { "variable": "$output_file"   , "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\azcopy.csv" ] },
-                { "variable": "$azcopy_jnl_dir", "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\jnl\\out" ] },
-                { "variable": "$local_dir",      "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\out\\data" ] },
+                { "variable": "$output_file"   , "objects": [ "C:\\AzCopyWorkspace\\azcopy.csv" ] },
+                { "variable": "$azcopy_jnl_dir", "objects": [ "C:\\AzCopyWorkspace\\jnl\\out"] },
+                { "variable": "$local_dir",      "objects": [ "C:\\AzCopyWorkspace\\out\\data"] },
                 { "variable": "$action",         "objects": [ "upload"] },
-                { "variable": "$threads",        "objects": [ "64" ] },
-                { "variable": "$protocol",       "objects": [ "http" ] },
-                { "variable": "$proxy",          "objects": [ "\"\"" ] },
-                { "variable": "$container",      "objects": [ "dlalancettewestus.blob.core.windows.net/davidcontainer/data" ] },
+                { "variable": "$threads",        "objects": [ "64"] },
+                { "variable": "$protocol",       "objects": [ "http"] },
+                { "variable": "$proxy",          "objects": [ "localhost:8000", "\"\"" ] },
+                { "variable": "$container",      "objects": [ "<Storage account>.blob.core.windows.net/windows-test-upload/data" ] },
                 { "variable": "$pattern",        "objects": [ "*.*" ] },
-                { "variable": "$key",            "objects": [ "<KEY>" ] }
+                { "variable": "$key",            "objects": [ "<Key>" ] }
             ],
-            "command_timeout_sec": 3600,
-            "interval": "0/20 * * * * *",
-            "max_iterations": 10
+            "command_timeout_sec": 240,
+            "interval": "0 0 */1 * * *",
+            "max_iterations": 56
         },
         {
-            "job_name": "AzCopy download",
+            "job_name": "AzCopy download every hour",
             "os": "windows",
             "command_name": "powershell",
             "command_args": [
@@ -51,20 +51,20 @@
                 "$key"
             ],
             "command_sets": [
-                { "variable": "$output_file"   , "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\azcopy.csv" ] },
-                { "variable": "$azcopy_jnl_dir", "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\jnl\\in" ] },
-                { "variable": "$local_dir",      "objects": [ "C:\\Users\\dlalancette\\AzWorkspace\\in" ] },
+                { "variable": "$output_file"   , "objects": [ "C:\\AzCopyWorkspace\\azcopy.csv" ] },
+                { "variable": "$azcopy_jnl_dir", "objects": [ "C:\\AzCopyWorkspace\\jnl\\in" ] },
+                { "variable": "$local_dir",      "objects": [ "C:\\AzCopyWorkspace\\in" ] },
                 { "variable": "$action",         "objects": [ "download" ] },
                 { "variable": "$threads",        "objects": [ "64" ] },
                 { "variable": "$protocol",       "objects": [ "http" ] },
-                { "variable": "$proxy",          "objects": [ "\"\"" ] },
-                { "variable": "$container",      "objects": [ "dlalancettewestus.blob.core.windows.net/davidcontainer" ] },
+                { "variable": "$proxy",          "objects": [ "localhost:8000", "\"\"" ] },
+                { "variable": "$container",      "objects": [ "<Storage account>.blob.core.windows.net/windows-test-download" ] },
                 { "variable": "$pattern",        "objects": [ "data" ] },
-                { "variable": "$key",            "objects": [ <KEY>" ] }
+                { "variable": "$key",            "objects": [ "<Key>" ] }
             ],
-            "command_timeout_sec": 3600,
-            "interval": "10/20 * * * * *",
-            "max_iterations": 10
+            "command_timeout_sec": 240,
+            "interval": "0 5 */1 * * *",
+            "max_iterations": 56
         }
     ]
 }

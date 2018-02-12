@@ -1,0 +1,28 @@
+{
+    "job": [
+        {
+            "job_name": "Run Sleep Permutation Every 10 Seconds on Unix",
+            "os": "darwin,linux",
+            "command_name": "bash",
+            "command_args": [ "-c", "sleep $delay" ],
+            "command_sets": [
+                { "variable": "$delay", "objects": [ "1", "2", "3" ] }
+            ],
+            "command_timeout_sec": 5,
+            "interval": "*/10 * * * * *",
+            "max_iterations": 2
+        },
+        {
+            "job_name": "Run Sleep Permutation Every 10 Seconds on Windows",
+            "os": "windows",
+            "command_name": "powershell",
+            "command_args": [ "sleep", "$delay" ],
+            "command_sets": [
+                { "variable": "$delay", "objects": [ "1", "2", "3" ] }
+            ],
+            "command_timeout_sec": 5,
+            "interval": "*/10 * * * * *",
+            "max_iterations": 2
+        }
+    ]
+}
