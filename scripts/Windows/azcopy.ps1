@@ -33,7 +33,7 @@ $azcopy_config_template = @'
 <configuration>
 <system.net>
   <defaultProxy>
-     <proxy proxyaddress="<PROTOCOL>://<PROXY_ADDRESS_AND_PORT>" bypassonlocal="false" />
+     <proxy proxyaddress="http://<PROXY_ADDRESS_AND_PORT>" bypassonlocal="false" />
   </defaultProxy>
 </system.net>
 </configuration>
@@ -57,7 +57,8 @@ function generate_config_file()
 
     if ("$proxy" -ne "")
     {
-        $azcopy_config = $azcopy_config_template.Replace("<PROTOCOL>", "$protocol")
+#        $azcopy_config = $azcopy_config_template.Replace("<PROTOCOL>", "$protocol")
+	$azcopy_config = $azcopy_config_template
         $azcopy_config = $azcopy_config.Replace("<PROXY_ADDRESS_AND_PORT>", "$proxy")
         Write-Verbose "Proxy Configuration:"
         Write-Verbose "$azcopy_config"
@@ -79,12 +80,6 @@ function get_results()
     $after = epoch_millis
     Write-Host "Logging results at $after"
 
-    $err_code = switch ($?)
-    {
-        $true    { "Success" }
-        $false   { "Failure" }
-    }
-
     # Compute the sum of all sizes of files found recursively in the local directory.
     $filesize = ((Get-ChildItem "$local_dir" -Recurse) | Measure-Object -sum length).Sum
     $bits = $filesize * 8
@@ -99,7 +94,7 @@ function get_results()
     $block_size = $null # For compatibility with shell verion; Windows AzCopy doesn't seem to support block size.
     $packet_loss = 0 # For compatibility with shell verion; We can't manipulate packet loss.
     
-    ("${before},${vm_location},${vm_size},${os_version},${azcopy_version},${flightgw_version},${flightgw_pid},${threads},${block_size},${packet_loss},${protocol},${proxy},${container},${action},${err_code},${filesize},${duration},${bitrate}") >> ${csv_file}
+    ("${before},${vm_location},${vm_size},${os_version},${azcopy_version},${flightgw_version},${flightgw_pid},${threads},${block_size},${packet_loss},${protocol},${proxy},${container},${action},${success_code},${filesize},${duration},${bitrate}") >> ${csv_file}
 }
 
 function get_versions()
@@ -119,7 +114,7 @@ function get_versions()
 
     if (Test-Path "${flightgw_bin}")
     {
-        $flightgw_version = (& "${flightgw_bin}" --version) | select-string flight-gateway
+        $Script:flightgw_version = (& "${flightgw_bin}" --version) | select-string flight-gateway
     }
 
     $Script:os_version = (Get-WmiObject -class Win32_OperatingSystem).Caption
@@ -158,13 +153,23 @@ function run_azcopy()
     $Script:before = epoch_millis
     Write-Host "Began running at $Script:before"
 
+    $success = $true
+
     if ("$action" -eq "download")
     {
         & "${azcopy_bin}" /Dest:"${local_dir}" /Source:"${protocol}://${container}" /SourceKey:"${key}" /Y /NC:"${threads}" /S /Z:"${azcopy_jnl_dir}" /Pattern:"$pattern"
+	$success = $?
     } 
     elseif ("$action" -eq "upload")
     {
         & "${azcopy_bin}" /Source:"${local_dir}" /Dest:"${protocol}://${container}" /DestKey:"${key}" /Y /NC:"${threads}" /S /Z:"${azcopy_jnl_dir}" /Pattern:"$pattern"
+        $success = $?
+    }
+
+    $Script:success_code = switch ($success)
+    {
+        $true    { "Success" }
+        $false   { "Failure" }
     }
 
     Write-Verbose "Finished running"
@@ -184,10 +189,12 @@ function set_configs()
 $action      = "$action".ToLower()
 $protocol    = "$protocol".ToLower()
 
-try {
+#try {
     get_versions
     set_configs
     run_azcopy
-} finally {
+#} catch {
+#Write-Host "Encountered an error or interrupt signal; Getting results and terminating early."
+#} finally {
     on_signal
-}
+#}
