@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$#" -ne 12 ]; then
-    printf "Usage: ${0} [csv output file] [client] [client configuration directory] [data directory] [download|upload] [threads] [chunk size] [packet loss] [http|https] [proxy] [container URL] [access key]\n"
+if [ "$#" -ne 13 ]; then
+    printf "Usage: ${0} [csv output file] [client] [client configuration directory] [data directory] [download|upload] [threads] [chunk size] [packet loss] [http|https] [proxy] [storage URL] [storage access key] [storage region]\n"
     exit 0
 fi
 
@@ -20,8 +20,9 @@ chunk_size="${7}"                               # Example:  "4"
 packet_loss="${8}"                              # Example:  "0.1"
 protocol=$(tr '[:upper:]' '[:lower:]'<<<"${9}") # Examples: "http" or "https"
 proxy="${10}"                                   # Examples: "localhost:8000", "localhost:8443", ""
-container="${11}"                               # Examples: "myblob.blob.core.windows.net/mycontainer" or "mys3bucket/myobjectkey"
+container="${11}"                               # Examples: "myblob.blob.core.windows.net/mycontainer" or "mybucket/mykey"
 access_key="${12}"                              # Example:  "myawsaccesskey myawssecretkey"
+region="${13}"                                  # Example:  "us-west-2" or "westus2"
 
 function get_results() {
     local err_code=$?
@@ -126,11 +127,12 @@ function run_awscli() {
     eval "${client_bin} configure set s3.addressing_style virtual"
 
     if [ "${action}" == "download" ]; then
-        cmd="${client_bin} s3 cp --recursive s3://${container} ${local_dir} --region us-west-2"
+        cmd="${client_bin} s3 cp --recursive s3://${container} ${local_dir} --region ${region}"
     elif [ "${action}" == "upload" ]; then
-        #endpoint_url="--endpoint-url http://s3-us-west-2.amazonaws.com"
-        cmd="${client_bin} s3 cp --recursive ${local_dir} s3://${container} --region us-west-2"
+        cmd="${client_bin} s3 cp --recursive ${local_dir} s3://${container} --region ${region}"
     fi
+
+    cmd="${cmd} --endpoint-url ${protocol}://s3.${region}.amazonaws.com"
 
     eval "${cmd}"
 }
