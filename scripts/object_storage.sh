@@ -123,7 +123,7 @@ function run_awscli() {
     export AWS_CONFIG_FILE="${client_conf_dir}/config"
 
     eval "${client_bin} configure set default.s3.max_concurrent_requests ${threads}"
-    eval "${client_bin} configure set default.s3.multipart_chunksize ${chunk_size}"
+    eval "${client_bin} configure set default.s3.multipart_chunksize ${chunk_size}MB"
     eval "${client_bin} configure set s3.addressing_style virtual"
 
     if [ "${action}" == "download" ]; then
