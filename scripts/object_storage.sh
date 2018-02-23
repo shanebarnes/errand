@@ -122,7 +122,10 @@ function run_awscli() {
     export AWS_SECRET_ACCESS_KEY="${aws_secret_key}"
     export AWS_CONFIG_FILE="${client_conf_dir}/config"
 
+    # See https://docs.aws.amazon.com/cli/latest/topic/s3-config.html
     eval "${client_bin} configure set default.s3.max_concurrent_requests ${threads}"
+    eval "${client_bin} configure set default.s3.max_queue_size 10000"
+    eval "${client_bin} configure set default.s3.multipart_threshold ${chunk_size}MB"
     eval "${client_bin} configure set default.s3.multipart_chunksize ${chunk_size}MB"
     eval "${client_bin} configure set s3.addressing_style virtual"
 
