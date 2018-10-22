@@ -6,10 +6,9 @@ job scheduler.
 ## Build Instructions
 
 ``` shell
-$ git clone https://github.com/shanebarnes/errand $GOPATH/src/github.com/shanebarnes/errand
-$ cd $GOPATH/src/github.com/shanebarnes/errand
-$ go get -v ./...
-$ go build -v
+$ git clone https://github.com/shanebarnes/errand.git
+$ cd errand
+$ ./build.sh
 ```
 
 ## Run Instructions
