@@ -11,7 +11,7 @@ net_dev=eth0
 # figure out cloud provider by making a rest call
 
 csv_file="${1}"                                 # Example:  "/home/user/azcopy_out.csv"
-client_bin="${2}"                               # Examples: "/usr/bin/azcopy" or "/usr/bin/aws"
+client_bin="${2}"                               # Examples: "/usr/bin/aws" or "/usr/bin/azcopy" or "/usr/local/bin/sigctl"
 client_conf_dir="${3}"                          # Example:  "/home/user/Microsoft/Azure/AzCopy"
 local_dir="${4}"                                # Example:  "/home/user/mydir"
 action=$(tr '[:upper:]' '[:lower:]'<<<"${5}")   # Examples: "download" or "upload"
@@ -157,6 +157,72 @@ function run_azcopy() {
     eval "${cmd}"
 }
 
+function run_sigctl() {
+    before=$(date +%s%3N)
+    local cmd=
+    local conf=$(mktemp /tmp/sigctl-job.XXXXXX)
+
+    local is_aws=0
+    local keys=( $access_key )
+    local aws_access_key=
+    local aws_secret_key=
+
+    if [ ${#keys[@]} -eq 2 ]; then
+        aws_access_key="${keys[0]}"
+        aws_secret_key="${keys[1]}"
+        is_aws=1
+    fi
+
+    local src_addr=
+    local src_cred=[]
+    local tgt_addr=
+    local tgt_cred=[]
+
+    echo "{" >> ${conf}
+    echo "    \"check_type\": \"none\"," >> ${conf}
+    echo "    \"flight_gateway\": \"${protocol}://${proxy}\"," >> ${conf}
+    echo "    \"log_level\": \"info\"," >> ${conf}
+
+    if [ "${action}" == "download" ]; then
+        src_addr=${container}
+        tgt_addr=${local_dir}
+        if [ "${is_aws}" -eq 1 ]; then
+            src_addr="${protocol}://${container}.${region}.amazonaws.com"
+            src_cred="[ \"${aws_access_key}\", \"${aws_secret_key}\" ]"
+        else
+            src_cred="[ \"${aws_access_key}\" ]"
+        fi
+    elif [ "${action}" == "upload" ]; then
+        src_addr=${local_dir}
+        tgt_addr=${container}
+        if [ "${is_aws}" -eq 1 ]; then
+            tgt_addr="${protocol}://${container}.${region}.amazonaws.com"
+            tgt_cred="[ \"${aws_access_key}\", \"${aws_secret_key}\" ]"
+        else
+            tgt_cred="[ \"${aws_access_key}\" ]"
+        fi
+    fi
+
+    echo "    \"source\": {" >> ${conf}
+    echo "        \"address\": \"${src_addr}\"," >> ${conf}
+    echo "        \"credentials\": ${src_cred}," >> ${conf}
+    echo "        \"part_length\": \"${chunk_size}Mi\"," >> ${conf}
+    echo "        \"worker_threads\": ${threads}" >> ${conf}
+    echo "    }," >> ${conf}
+    echo "    \"target\": {" >> ${conf}
+    echo "        \"address\": \"${tgt_addr}\"," >> ${conf}
+    echo "        \"credentials\": ${tgt_cred}," >> ${conf}
+    echo "        \"part_length\": \"${chunk_size}Mi\"," >> ${conf}
+    echo "        \"worker_threads\": ${threads}" >> ${conf}
+    echo "    }" >> ${conf}
+    echo "}" >> ${conf}
+
+    cmd="${client_bin} -copy ${conf}"
+    eval "${cmd}"
+
+    rm -f "${conf}"
+}
+
 function run_client() {
     local client_name=$(basename "${client_bin}")
 
@@ -166,6 +232,9 @@ function run_client() {
         ;;
     "aws")
         run_awscli
+        ;;
+    "sigctl")
+        run_sigctl
         ;;
     *)
         false
