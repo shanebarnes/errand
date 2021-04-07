@@ -14,10 +14,9 @@ function err_handler() {
 
 trap 'err_handler' SIGINT ERR
 
-export GO111MODULE=on
-
 printf "Downloading and installing packages and dependencies...\n"
 go mod vendor -v
+go vet ./...
 
 targets=
 targets="$targets darwin/amd64"
@@ -26,7 +25,7 @@ targets="$targets windows/amd64"
 
 for target in $targets; do
     GOARCH=${target#*/}
-    GOOS=${target%/*}
+    export GOOS=${target%/*}
 
     printf "Compiling packages and dependencies %s...\n" "${target}"
     bin_name="errand-${GOOS}-${GOARCH}"

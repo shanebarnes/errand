@@ -1,0 +1,22 @@
+{
+    "job": [
+        {
+            "job_name": "Touch Directory Contents Every 4 Hours",
+            "os": "linux",
+            "command_name": "bash",
+            "command_args": [ "-c", "find /mnt/share/directory -type f -name \"*\" -exec touch {} +" ],
+            "command_timeout_sec": 30,
+            "interval": "0 0 */4 * * *",
+            "max_iterations": -1
+        },
+        {
+            "job_name": "Touch Directory Contents Every 4 Hours",
+            "os": "windows",
+            "command_name": "powershell",
+            "command_args": [ "-command", "dir \\\\?\\UNC\\127.0.0.1\\share\\directory -R | foreach { $_.LastWriteTime = [System.DateTime]::Now }" ],
+            "command_timeout_sec": 30,
+            "interval": "0 0 */4 * * *",
+            "max_iterations": -1
+        }
+    ]
+}
